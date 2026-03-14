@@ -68,11 +68,12 @@ Monorepo: **shared** (types/constants), **api** (Express + Prisma + PostHog/Bedr
 2. **Demo**: User goes through product list → product detail → add to cart → checkout. Custom events: `product_viewed`, `add_to_cart`, `checkout_started`. “Simulate payment failure” calls `POST /sessions/:id/simulate-payment-failure` to trigger coupon generation.
 3. **API**: On payment failure (webhook or simulate), the API writes to `payment_failures`, fetches behavior from PostHog (Query API, HogQL by `$session_id`), calls Bedrock for `coupon_description` and `personalized_message`, persists the coupon and sends email (Resend), then marks the payment failure as processed.
 4. **Session details**: “My session” calls `GET /sessions/:id` and shows metadata, whether a coupon was sent, and an optional behavior summary from PostHog.
+5. **Negotiation**: If the user already has a coupon but isn’t satisfied, they can go to “Negotiate”, enter a reason (e.g. “I need a bigger discount”), and submit. The app calls `POST /sessions/:sessionId/negotiate-coupon` with `{ "reason": "..." }`. The API sends the existing coupon and reason to Bedrock; the model returns an improved coupon suggestion (discount type, value, message) and a short reply. The UI shows the suggested offer and reply (nothing is auto-applied or emailed).
 
 ## Project layout
 
 - `packages/shared` – Types and constants used by api and web
-- `apps/api` – Express, Prisma (Neon), routes: sessions, webhooks/pinelabs; services: PostHog API, Bedrock, mail, coupon generation
+- `apps/api` – Express, Prisma (Neon), routes: sessions (including negotiate-coupon), webhooks/pinelabs; services: PostHog API, Bedrock, mail, coupon generation, negotiate-coupon
 - `apps/web` – React, Vite, session-first PostHog, demo flow and session details pages
 
 ## Pinelabs webhook
