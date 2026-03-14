@@ -1,6 +1,7 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import { DemoFlow } from './pages/DemoFlow';
 import { SessionDetails } from './pages/SessionDetails';
+import { NegotiateCoupon } from './pages/NegotiateCoupon';
 
 export function App() {
   return (
@@ -12,6 +13,7 @@ export function App() {
       <Routes>
         <Route path="/" element={<DemoFlow />} />
         <Route path="/session" element={<SessionDetails />} />
+        <Route path="/negotiate" element={<NegotiateCoupon />} />
       </Routes>
     </div>
   );

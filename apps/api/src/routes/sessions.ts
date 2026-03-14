@@ -9,6 +9,7 @@ import * as couponsRepo from '../db/repositories/coupons.js';
 import * as paymentFailuresRepo from '../db/repositories/payment-failures.js';
 import { getBehaviorSummaryForSession } from '../services/posthog-api.js';
 import { generateCoupon } from '../services/coupon-generation.js';
+import { negotiateCoupon } from '../services/negotiate-coupon.js';
 
 export const sessionsRouter: Router = createRouter();
 
@@ -26,6 +27,55 @@ sessionsRouter.post<object, CreateSessionResponse | { error: string }, CreateSes
   } catch (err) {
     console.error('[sessions] create failed:', err);
     res.status(500).json({ error: 'Failed to create session' });
+  }
+});
+
+/** GET /sessions/:id/negotiate – previous coupon for negotiate page */
+sessionsRouter.get<{ id: string }>('/:id/negotiate', async (req, res) => {
+  try {
+    const session = await sessionsRepo.getSessionById(req.params.id);
+    if (!session) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    const coupons = await couponsRepo.getCouponsBySessionId(session.id);
+    const previous = coupons[0];
+    if (!previous) {
+      res.status(404).json({ error: 'No coupon to negotiate' });
+      return;
+    }
+    res.json({
+      sessionId: session.id,
+      previousCoupon: {
+        code: previous.code,
+        discountValue: previous.discountValue,
+        personalizedMessage: previous.personalizedMessage ?? null,
+      },
+    });
+  } catch (err) {
+    console.error('[sessions] negotiate get failed:', err);
+    res.status(500).json({ error: 'Failed to fetch negotiate offer' });
+  }
+});
+
+/** POST /sessions/:id/negotiate – submit reason, get better coupon + reply */
+sessionsRouter.post<{ id: string }>('/:id/negotiate', async (req, res) => {
+  try {
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+    if (!reason) {
+      res.status(400).json({ error: 'Reason is required' });
+      return;
+    }
+    const result = await negotiateCoupon(req.params.id, reason);
+    if ('error' in result) {
+      const status = result.error === 'Session not found' || result.error === 'No coupon to negotiate' ? 404 : 502;
+      res.status(status).json({ error: result.error });
+      return;
+    }
+    res.json({ reply: result.reply, newCouponCode: result.newCouponCode });
+  } catch (err) {
+    console.error('[sessions] negotiate post failed:', err);
+    res.status(500).json({ error: 'Negotiation failed' });
   }
 });
 

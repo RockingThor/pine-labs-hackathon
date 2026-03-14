@@ -68,7 +68,7 @@ export async function generateCoupon(input: GenerateCouponInput): Promise<{ coup
     priority: input.priority === 'payment_failure' ? COUPON_PRIORITY.PAYMENT_FAILURE : COUPON_PRIORITY.SESSION_BASED,
   });
 
-  await sendCouponEmail(userEmail, code, suggestion.personalized_message);
+  await sendCouponEmail(userEmail, code, suggestion.personalized_message, { sessionId: input.sessionId });
 
   if (input.paymentFailureId) {
     await paymentFailuresRepo.markProcessed(input.paymentFailureId);
