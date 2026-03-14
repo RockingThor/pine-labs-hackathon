@@ -1,0 +1,29 @@
+# Dependencies and build outputs
+node_modules
+.pnpm-store
+**/dist
+**/build
+**/.vite
+
+# Environment and secrets (never bake into image)
+.env
+.env.*
+!.env.example
+
+# Git and IDE
+.git
+.gitignore
+.idea
+.vscode
+*.md
+!README.md
+
+# Logs and cache
+*.log
+.turbo
+.nyc_output
+coverage
+.cache
+
+# OS
+.DS_Store

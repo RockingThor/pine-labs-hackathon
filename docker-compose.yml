@@ -1,0 +1,24 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    env_file: .env
+    environment:
+      - PORT=3000
+    restart: unless-stopped
+    # No ports exposed to host when behind web (nginx); expose for direct access if needed:
+    # ports:
+    #   - "3000:3000"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        - VITE_API_URL=/api
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    restart: unless-stopped
